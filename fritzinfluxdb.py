@@ -16,7 +16,8 @@ from datetime import datetime
 
 # import 3rd party modules
 import fritzconnection
-import influxdb
+from influxdb_client import InfluxDBClient, Point
+
 
 
 __version__ = "0.3.0"
@@ -243,22 +244,10 @@ def check_db_status(db_handler, db_name):
     """
 
     try:
-        dblist = db_handler.get_list_database()
+        client = InfluxDBClient.from_env_properties()
     except Exception as e:
         logging.error('Problem connecting to database: %s', str(e))
         return
-
-    if db_name not in [db['name'] for db in dblist]:
-
-        logging.info(f'Database <{db_name}> not found, trying to create it')
-
-        try:
-            db_handler.create_database(db_name)
-        except Exception as e:
-            logging.error('Problem creating database: %s', str(e))
-            return
-    else:
-        logging.debug(f'Influx Database <{db_name}> exists')
 
     logging.info("Connection to InfluxDB established and database present")
 
@@ -314,15 +303,8 @@ def main():
     # set up influxdb handler
     influxdb_client = None
     try:
-        influxdb_client = influxdb.InfluxDBClient(
-            config.get('influxdb', 'host'),
-            config.getint('influxdb', 'port', fallback=8086),
-            config.get('influxdb', 'username'),
-            config.get('influxdb', 'password'),
-            config.get('influxdb', 'database'),
-            config.getboolean('influxdb', 'ssl', fallback=False),
-            config.getboolean('influxdb', 'verify_ssl', fallback=False)
-        )
+        influxdb_client = InfluxDBClient.from_env_properties()
+
         # test more config options and see if they are present
         _ = config.get('influxdb', 'measurement_name')
     except configparser.Error as e:
