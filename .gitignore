@@ -1,2 +1,3 @@
 .venv
 fritzinfluxdb.ini
+/runConfigurations/fritzinfluxdb.run.xml

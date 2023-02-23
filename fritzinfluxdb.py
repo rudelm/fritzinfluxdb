@@ -17,14 +17,12 @@ from datetime import datetime
 # import 3rd party modules
 import fritzconnection
 from influxdb_client import InfluxDBClient, Point
-
-
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 __version__ = "0.3.0"
 __version_date__ = "2020-08-03"
 __description__ = "fritzinfluxdb"
 __license__ = "MIT"
-
 
 # default vars
 running = True
@@ -229,31 +227,6 @@ def read_config(filename):
     return config
 
 
-def check_db_status(db_handler, db_name):
-    """
-    Check if InfluxDB handler has access to a database.
-    If it doesn't exist try to create it.
-
-    Parameters
-    ----------
-    db_handler: influxdb.InfluxDBClient
-        InfluxDB handler object
-
-    db_name: str
-        Name of DB to check
-    """
-
-    try:
-        client = InfluxDBClient.from_env_properties()
-    except Exception as e:
-        logging.error('Problem connecting to database: %s', str(e))
-        return
-
-    logging.info("Connection to InfluxDB established and database present")
-
-    return
-
-
 def get_services(config, section_name_prefix):
     """
     Parse all sections matching the prefix to a dict which is used to request services and actions.
@@ -297,16 +270,26 @@ def main():
     else:
         logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s: %(message)s')
 
-    # read config from ini file
-    config = read_config(args.config_file)
-
     # set up influxdb handler
     influxdb_client = None
     try:
-        influxdb_client = InfluxDBClient.from_env_properties()
 
-        # test more config options and see if they are present
-        _ = config.get('influxdb', 'measurement_name')
+        # read config from ini file
+        config = read_config(args.config_file)
+        _ = config.get('influxdb2', 'url')
+        _ = config.get('influxdb2', 'database')
+        _ = config.get('influxdb2', 'organization')
+        _ = config.get('influxdb2', 'measurement_name')
+
+        _ = config.get('fritzbox', 'host')
+        _ = config.getint('fritzbox', 'port')
+        _ = config.get('fritzbox', 'username')
+        _ = config.getint('fritzbox', 'timeout')
+        _ = config.getboolean('fritzbox', 'ssl')
+
+
+
+
     except configparser.Error as e:
         logging.error("Config Error: %s", str(e))
         exit(1)
@@ -314,8 +297,19 @@ def main():
         logging.error("Config Error: %s", str(e))
         exit(1)
 
-    # check influx db status
-    check_db_status(influxdb_client, config.get('influxdb', 'database'))
+    from os import environ
+    if environ.get('FRITZBOX_PASSWORD') is None:
+        logging.error("Missing environment vatable FRITZBOX_PASSWORD.")
+        exit(1)
+
+    if environ.get('INFLUXDB_V2_TOKEN') is None:
+        logging.error("Missing environment vatable INFLUXDB_V2_TOKEN.")
+        exit(1)
+
+    with InfluxDBClient(url=config.get('influxdb2', 'url'),
+                        token=os.getenv('INFLUXDB_V2_TOKEN'),
+                        org=config.get('influxdb2', 'organization')) as client:
+        write_api = client.write_api(write_options=SYNCHRONOUS)
 
     # create authenticated FB client handler
     fritz_client_auth = None
@@ -325,7 +319,7 @@ def main():
             address=config.get('fritzbox', 'host', fallback='192.168.178.1'),
             port=config.getint('fritzbox', 'port', fallback=49000),
             user=config.get('fritzbox', 'username'),
-            password=config.get('fritzbox', 'password'),
+            password=os.getenv('FRITZBOX_PASSWORD'),
             timeout=config.getint('fritzbox', 'timeout', fallback=5),
             use_tls=config.getboolean('fritzbox', 'ssl', fallback=False)
         )
@@ -365,7 +359,7 @@ def main():
 
         # query data
         data = {
-            "measurement": config.get('influxdb', 'measurement_name'),
+            "measurement": config.get('influxdb2', 'measurement_name'),
             "time": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "fields": query_services(fritz_client_auth, services_to_query)
         }
@@ -379,9 +373,10 @@ def main():
 
         # noinspection PyBroadException
         try:
-            influxdb_client.write_points([data], time_precision="ms")
+            point = Point.from_dict(data, time_precision="ms")
+            write_api.write(config.get('influxdb2', 'database'), config.get('influxdb2', 'organization'), point)
         except Exception as e:
-            logging.error("Failed to write to InfluxDB <%s>: %s" % (config.get('influxdb', 'host'), str(e)))
+            logging.error("Failed to write to InfluxDB <%s>: %s" % (config.get('influxdb2', 'url'), str(e)))
 
         duration = int(datetime.utcnow().timestamp() * 1000) - start
 
@@ -396,7 +391,6 @@ def main():
             if running is False:
                 break
             time.sleep(0.0965)
-
 
 if __name__ == "__main__":
     main()

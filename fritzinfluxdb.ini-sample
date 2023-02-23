@@ -1,23 +1,18 @@
-[influxdb]
-host = 127.0.0.1
-port = 8086
-username = bla
-password = blub
-database = db
-ssl = false
-verify_ssl = true
+[influxdb2]
+database = mydatabase
 measurement_name = fritzbox
+organization = my-organization
+url = http://myinfluxserver:8086
 
 [fritzbox]
-host = 192.168.178.1
-username = dslf-config
-password =
+host = myfritzbox
+username = myfritzuser
 # change to 49443 if you use ssl
 port = 49000
 timeout = 5
-ssl = false
+ssl = False
 # interval to request data in seconds
-#interval = 10
+interval = 60
 
 
 [service1]

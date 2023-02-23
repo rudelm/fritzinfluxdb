@@ -4,18 +4,21 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
-      <env name="PYTHONUNBUFFERED" value="1" />
-      <env name="INFLUXDB_V2_URL" value="http:192.168.12.108:8086" />
-      <env name="INFLUXDB_V2_ORG" value="test" />
-      <env name="INFLUXDB_V2_TOKEN " value="gjBwz1YS4uLQJNqVv0TewkXnZeNYAMMBDEsURMKuCTYEIvrx-WKdtyJ8AZ1sqfXb4Qy9r92rI8-ZiMx5id8KIA==" />
-      <env name="INFLUXDB_V2_VERIFY_SSL" value="False" />
+      <env name="PYTHONUNBUFFERED" value="PbGHUfsG69M7S8WL" />
+      <env name="FRITZBOX_PASSWORD" value="PbGHUfsG69M7S8WL" />
+      <env name="INFLUXDB_V2_TOKEN" value="gjBwz1YS4uLQJNqVv0TewkXnZeNYAMMBDEsURMKuCTYEIvrx-WKdtyJ8AZ1sqfXb4Qy9r92rI8-ZiMx5id8KIA==" />
     </envs>
-    <option name="SDK_HOME" value="$PROJECT_DIR$/venv/bin/python" />
-    <option name="SDK_NAME" value="Python 3.9 (fritzinfluxdb)" />
+    <option name="SDK_HOME" value="/usr/bin/python3" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <EXTENSION ID="software.aws.toolkits.jetbrains.core.execution.PythonAwsConnectionExtension">
+      <option name="credential" />
+      <option name="region" />
+      <option name="useCurrentConnection" value="false" />
+    </EXTENSION>
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/fritzinfluxdb.py" />
     <option name="PARAMETERS" value="" />
     <option name="SHOW_COMMAND_LINE" value="false" />
